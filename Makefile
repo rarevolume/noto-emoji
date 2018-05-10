@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-EMOJI = NotoColorEmoji
+EMOJI = Twemoji
 font: $(EMOJI).ttf
 
 CFLAGS = -std=c99 -Wall -Wextra `pkg-config --cflags --libs cairo`
@@ -20,7 +20,8 @@ LDFLAGS = -lm `pkg-config --libs cairo`
 PNGQUANTDIR := third_party/pngquant
 PNGQUANT := $(PNGQUANTDIR)/pngquant
 PNGQUANTFLAGS = --speed 1 --skip-if-larger --quality 85-95 --force
-BODY_DIMENSIONS = 136x128
+#BODY_DIMENSIONS = 136x128
+BODY_DIMENSIONS = 72x72
 IMOPS := -size $(BODY_DIMENSIONS) canvas:none -compose copy -gravity center
 
 # zopflipng is better (about 5-10%) but much slower.  it will be used if
@@ -35,7 +36,8 @@ ADD_GLYPHS_FLAGS = -a emoji_aliases.txt
 PUA_ADDER = map_pua_emoji.py
 VS_ADDER = add_vs_cmap.py # from nototools
 
-EMOJI_SRC_DIR := png/128
+#EMOJI_SRC_DIR := png/128
+EMOJI_SRC_DIR := png/twitter
 FLAGS_SRC_DIR := third_party/region-flags/png
 
 BUILD_DIR := build
@@ -76,7 +78,7 @@ SELECTED_FLAGS = AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ \
 	ZA ZM ZW \
         GB-ENG GB-SCT GB-WLS
 
-ALL_FLAGS = $(basename $(notdir $(wildcard $(FLAGS_SRC_DIR)/*.png)))
+ALL_FLAGS = $(basename $(notdir $(wildcard $(FLAGS_SRC_DIR)/emoji_u*.png)))
 
 FLAGS = $(SELECTED_FLAGS)
 
@@ -88,7 +90,7 @@ FLAG_GLYPH_NAMES = $(shell ./flag_glyph_name.py $(FLAGS))
 RENAMED_FLAG_NAMES = $(FLAG_GLYPH_NAMES:%=emoji_%.png)
 RENAMED_FLAG_FILES = $(addprefix $(RENAMED_FLAGS_DIR)/, $(RENAMED_FLAG_NAMES))
 
-EMOJI_NAMES = $(notdir $(wildcard $(EMOJI_SRC_DIR)/emoji_u*.png))
+EMOJI_NAMES = $(notdir $(wildcard $(EMOJI_SRC_DIR)/*.png))
 EMOJI_FILES= $(addprefix $(EMOJI_DIR)/,$(EMOJI_NAMES)))
 
 ALL_NAMES = $(EMOJI_NAMES) $(RENAMED_FLAG_NAMES)
@@ -116,11 +118,11 @@ endif
 
 emoji: $(EMOJI_FILES)
 
-flags: $(FLAG_FILES)
+#flags: $(FLAG_FILES)
 
-resized_flags: $(RESIZED_FLAG_FILES)
+#resized_flags: $(RESIZED_FLAG_FILES)
 
-renamed_flags: $(RENAMED_FLAG_FILES)
+#renamed_flags: $(RENAMED_FLAG_FILES)
 
 quantized: $(ALL_QUANTIZED_FILES)
 
@@ -143,14 +145,15 @@ ifdef MISSING_ADDER
 endif
 
 
-$(EMOJI_DIR) $(FLAGS_DIR) $(RESIZED_FLAGS_DIR) $(RENAMED_FLAGS_DIR) $(QUANTIZED_DIR) $(COMPRESSED_DIR):
+#$(EMOJI_DIR) $(FLAGS_DIR) $(RESIZED_FLAGS_DIR) $(RENAMED_FLAGS_DIR) $(QUANTIZED_DIR) $(COMPRESSED_DIR):
+$(EMOJI_DIR) $(QUANTIZED_DIR) $(COMPRESSED_DIR):
 	mkdir -p "$@"
 
 $(PNGQUANT):
 	$(MAKE) -C $(PNGQUANTDIR)
 
-waveflag: waveflag.c
-	$(CC) $< -o $@ $(CFLAGS) $(LDFLAGS)
+#waveflag: waveflag.c
+#	$(CC) $< -o $@ $(CFLAGS) $(LDFLAGS)
 
 
 # imagemagick's -extent operator munges the grayscale images in such a fashion
@@ -165,24 +168,24 @@ waveflag: waveflag.c
 $(EMOJI_DIR)/%.png: $(EMOJI_SRC_DIR)/%.png | $(EMOJI_DIR)
 	@convert $(IMOPS) "$<" -composite "PNG32:$@"
 
-$(FLAGS_DIR)/%.png: $(FLAGS_SRC_DIR)/%.png ./waveflag $(PNGQUANT) | $(FLAGS_DIR)
-	@./waveflag $(FLAGS_DIR)/ "$<"
+#$(FLAGS_DIR)/%.png: $(FLAGS_SRC_DIR)/%.png ./waveflag $(PNGQUANT) | $(FLAGS_DIR)
+#	@./waveflag $(FLAGS_DIR)/ "$<"
 
-$(RESIZED_FLAGS_DIR)/%.png: $(FLAGS_DIR)/%.png | $(RESIZED_FLAGS_DIR)
-	@convert $(IMOPS) "$<" -composite "PNG32:$@"
+#$(RESIZED_FLAGS_DIR)/%.png: $(FLAGS_DIR)/%.png | $(RESIZED_FLAGS_DIR)
+#	@convert $(IMOPS) "$<" -composite "PNG32:$@"
 
-flag-symlinks: $(RESIZED_FLAG_FILES) | $(RENAMED_FLAGS_DIR)
-	@$(subst ^, ,                                  \
-	  $(join                                       \
-	    $(FLAGS:%=ln^-fs^../resized_flags/%.png^), \
-	    $(RENAMED_FLAG_FILES:%=%; )                \
-	   )                                           \
-	 )
+#flag-symlinks: $(RESIZED_FLAG_FILES) | $(RENAMED_FLAGS_DIR)
+#	@$(subst ^, ,                                  \
+#	  $(join                                       \
+#	    $(FLAGS:%=ln^-fs^../resized_flags/%.png^), \
+#	    $(RENAMED_FLAG_FILES:%=%; )                \
+#	   )                                           \
+#	 )
 
-$(RENAMED_FLAG_FILES): | flag-symlinks
+#$(RENAMED_FLAG_FILES): | flag-symlinks
 
-$(QUANTIZED_DIR)/%.png: $(RENAMED_FLAGS_DIR)/%.png $(PNGQUANT) | $(QUANTIZED_DIR)
-	@($(PNGQUANT) $(PNGQUANTFLAGS) -o "$@" "$<"; case "$$?" in "98"|"99") echo "reuse $<"; cp $< $@;; *) exit "$$?";; esac)
+#$(QUANTIZED_DIR)/%.png: $(RENAMED_FLAGS_DIR)/%.png $(PNGQUANT) | $(QUANTIZED_DIR)
+#	@($(PNGQUANT) $(PNGQUANTFLAGS) -o "$@" "$<"; case "$$?" in "98"|"99") echo "reuse $<"; cp $< $@;; *) exit "$$?";; esac)
 
 $(QUANTIZED_DIR)/%.png: $(EMOJI_DIR)/%.png $(PNGQUANT) | $(QUANTIZED_DIR)
 	@($(PNGQUANT) $(PNGQUANTFLAGS) -o "$@" "$<"; case "$$?" in "98"|"99") echo "reuse $<";cp $< $@;; *) exit "$$?";; esac)
@@ -205,7 +208,8 @@ endif
 # Run make without -j if this happens.
 
 %.ttx: %.ttx.tmpl $(ADD_GLYPHS) $(ALL_COMPRESSED_FILES)
-	@python $(ADD_GLYPHS) -f "$<" -o "$@" -d "$(COMPRESSED_DIR)" $(ADD_GLYPHS_FLAGS)
+	#@python $(ADD_GLYPHS) -f "$<" -o "$@" -d "$(COMPRESSED_DIR)" $(ADD_GLYPHS_FLAGS)
+	@python $(ADD_GLYPHS) -f "$<" -o "$@" -d "$(COMPRESSED_DIR)"
 
 %.ttf: %.ttx
 	@rm -f "$@"
@@ -221,10 +225,11 @@ $(EMOJI).ttf: $(EMOJI).tmpl.ttf $(EMOJI_BUILDER) $(PUA_ADDER) \
 
 clean:
 	rm -f $(EMOJI).ttf $(EMOJI).tmpl.ttf $(EMOJI).tmpl.ttx
-	rm -f waveflag
+	#rm -f waveflag
 	rm -rf $(BUILD_DIR)
 
-.SECONDARY: $(EMOJI_FILES) $(FLAG_FILES) $(RESIZED_FLAG_FILES) $(RENAMED_FLAG_FILES) \
+#.SECONDARY: $(EMOJI_FILES) $(FLAG_FILES) $(RESIZED_FLAG_FILES) $(RENAMED_FLAG_FILES) \
+.SECONDARY: $(EMOJI_FILES) \
   $(ALL_QUANTIZED_FILES) $(ALL_COMPRESSED_FILES)
 
 .PHONY:	clean flags emoji renamed_flags quantized compressed check_compress_tool
