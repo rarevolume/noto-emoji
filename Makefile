@@ -21,7 +21,7 @@ PNGQUANTDIR := third_party/pngquant
 PNGQUANT := $(PNGQUANTDIR)/pngquant
 PNGQUANTFLAGS = --speed 1 --skip-if-larger --quality 85-95 --force
 #BODY_DIMENSIONS = 136x128
-BODY_DIMENSIONS = 72x72
+BODY_DIMENSIONS = 80x72
 IMOPS := -size $(BODY_DIMENSIONS) canvas:none -compose copy -gravity center
 
 # zopflipng is better (about 5-10%) but much slower.  it will be used if
